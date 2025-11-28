@@ -45,6 +45,7 @@ Moteur de traitement, décision, filtrage, agrégation et stockage.
 
 * **En tant que pompier**, je souhaite que **l’évolution de l’incident auquel je participe soit remontée automatiquement** afin d’éviter les transmissions manuelles imprécises.
 * **En tant que pompier**, je souhaite que **l’assignation aux interventions soit intelligente**, basée sur ma position et mon statut, afin d’éviter les erreurs d’affectation.
+* **En tant que pompier**, je souhaite pouvoir demander des **renforts** sur une intervention.
 
 ### **3.2. Opérateur QG**
 
