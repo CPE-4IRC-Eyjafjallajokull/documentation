@@ -159,7 +159,6 @@ Le backend centralise, structure et décide :
 ##### **Diffusion temps réel**
 
 * SSE vers le front
-* Webhooks internes si nécessaire
 
 ---
 
