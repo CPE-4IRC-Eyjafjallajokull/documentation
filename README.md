@@ -140,3 +140,20 @@ Garantir une compréhension claire, durable et extensible du système complet, t
 * la maintenance technique.
 
 Ce dépôt doit toujours refléter l’état réel du système et ses évolutions.
+
+---
+
+## 8. Navigation rapide
+
+* Spécifications fonctionnelles détaillées : [functional_spec/main.md](functional_spec/main.md)
+* App QG : [vue d’ensemble](apps/README.md)
+  * API FastAPI : [apps/app-qg-api.md](apps/app-qg-api.md)
+  * Front Next.js : [apps/app-qg-front.md](apps/app-qg-front.md)
+  * Moteur décisionnel Java : [apps/app-qg-java-engine.md](apps/app-qg-java-engine.md)
+* IoT Terrain : [vue d’ensemble](iot/README.md)
+  * App terrain micro:bit : [iot/iot-terrain-microbit.md](iot/iot-terrain-microbit.md)
+  * Passerelle RF centrale : [iot/rf-central-gateway.md](iot/rf-central-gateway.md)
+* Simulation Java : [vue d’ensemble](simulation/README.md)
+  * Incidents : [simulation/simulation-java-incidents.md](simulation/simulation-java-incidents.md)
+  * Véhicules : [simulation/simulation-java-vehicles.md](simulation/simulation-java-vehicles.md)
+* Infrastructure / DevOps : [infrastructure/README.md](infrastructure/README.md)
