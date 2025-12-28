@@ -18,3 +18,8 @@ mvn clean package
 - Format des messages envoyés (queues RabbitMQ / payload JSON pour l'API).
 - Paramétrage des scénarios : fréquence, zones géographiques, types d'incidents.
 - Commandes CLI disponibles (seed, mode continu vs batch).
+
+## État actuel
+- Code refactoré : `SimulatorApp` passe par `handleIncidentCode` pour injecter un client API testable et ignore le code neutre `000` avant tout appel HTTP.
+- Config : `API_BASE_URL`, `API_TOKEN`, `RNG_SEED` (long) chargés via variables d'environnement; probabilités lues depuis `incident-probabilities.json`.
+- Tests : JUnit 5 couvrant sélection RNG, chargement des probabilités, client HTTP via serveur embarqué, et les flux valides/invalides/neutres de `SimulatorApp`.
