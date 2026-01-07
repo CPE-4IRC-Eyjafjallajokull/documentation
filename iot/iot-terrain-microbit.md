@@ -186,7 +186,7 @@ iot-terrain-microbit/
 
 ### Fichiers clés
 
-- `source/main.cpp` : Point d'entrée du scheduler CODAL à enrichir
+- `source/main.cpp` : Point d'entrée de la carte Micro:bit
 - `source/proto/` : Helpers de formatage des trames
 - `source/crypto/` : Implémentation AES-CMAC (cohérence avec passerelle centrale)
 
