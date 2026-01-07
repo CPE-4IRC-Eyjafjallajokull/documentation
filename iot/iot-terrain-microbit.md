@@ -1,8 +1,16 @@
+# Documentation Système SDMIS - Micro:bit
+
+## Table des matières
+- [Passerelle Micro:bit UART ↔ Radio SDMIS](#passerelle-microbit-uart--radio-sdmis)
+- [App Terrain micro:bit (émetteur)](#-app-terrain-microbit-émetteur)
+
+---
+
 # Passerelle Micro:bit UART ↔ Radio SDMIS
 
 ## 🎯 Vue d'ensemble
 
-La carte **Micro:bit** fonctionne comme une passerelle bidirectionnelle entre un simulateur Java (via liaison série UART) et un réseau radio IoT terrain utilisant le protocole **SDMIS crypté**.
+La carte **Micro:bit** fonctionne comme une passerelle bidirectionnelle entre un simulateur Java (via liaison série UART) et un réseau radio IoT terrain utilisant le protocole **SDMIS crypté avec acquittement**.
 
 ---
 
@@ -14,6 +22,8 @@ La carte **Micro:bit** fonctionne comme une passerelle bidirectionnelle entre un
 | **Groupe radio** | 42 |
 | **Puissance radio** | 7 (maximum) |
 | **Chiffrement** | AES-128 avec clé pré-partagée |
+| **Timeout ACK** | 200 ms |
+| **Tentatives de retransmission** | 3 maximum |
 
 ---
 
@@ -28,8 +38,11 @@ Le simulateur Java envoie des positions de véhicules au format CSV contenant l'
 1. Réception de la ligne CSV via UART
 2. Analyse des données : événement, immatriculation, latitude, longitude, timestamp
 3. Si l'événement est `vehicle_position` :
-   - Chiffrement et transmission de la position via radio SDMIS
-   - Affichage de **"T"** (Transmis) ou **"!"** (Erreur) sur l'écran
+   - Chiffrement de la trame avec **numéro de séquence unique**
+   - Transmission de la position via radio SDMIS
+   - **Attente d'un ACK** pendant 200 ms maximum
+   - Si aucun ACK reçu : **retransmission jusqu'à 3 tentatives** avec délai aléatoire (10-40 ms)
+   - Affichage de **"T"** (Transmis avec ACK reçu) ou **"!"** (Erreur, aucun ACK après 3 tentatives) sur l'écran
 
 ### 2️⃣ Communication Radio → UART (Terrain → Java)
 
@@ -37,10 +50,12 @@ Lorsqu'un message radio de type affectation de véhicule à un incident est reç
 
 **Actions effectuées :**
 
-1. Déchiffrement automatique du message radio
-2. Extraction des données (immatriculation, position GPS, timestamp)
-3. Transmission au simulateur Java via UART d'un message CSV contenant l'événement `vehicle_affectation`, l'immatriculation, la latitude, la longitude et le timestamp
-4. Affichage de **"A"** (Affectation) sur l'écran
+1. Réception et déchiffrement automatique du message radio
+2. **Envoi immédiat d'un ACK** à l'émetteur avec le numéro de séquence reçu
+3. **Détection des doublons** (même séquence + même nonce) pour éviter le traitement multiple
+4. Extraction des données (immatriculation, position GPS, timestamp)
+5. Transmission au simulateur Java via UART d'un message CSV contenant l'événement `vehicle_affectation`, l'immatriculation, la latitude, la longitude et le timestamp
+6. Affichage de **"A"** (Affectation) sur l'écran
 
 ---
 
@@ -65,15 +80,26 @@ vehicle_position,AB123CD,48.856614,2.352222,1736172600
 vehicle_affectation,SD304FR,45.797200,4.847000,1736172600
 ```
 
-> **Taille typique :** ~59 octets par message transmis
+> **Taille typique :** ~59 octets par message transmis sur UART
 
 ---
 
-## 🔐 Sécurité
+## 🔐 Sécurité et fiabilité
+
+### Chiffrement
 
 - ✅ Tous les messages radio sont chiffrés en **AES-128**
 - ✅ Authentification des messages par **CMAC** (Cipher-based Message Authentication Code)
 - ✅ Clé cryptographique de **128 bits** pré-configurée dans le firmware
+
+### Fiabilité de transmission
+
+- ✅ **Protocole avec acquittement (ACK)** automatique
+- ✅ Chaque trame possède un **numéro de séquence unique**
+- ✅ **Retransmission automatique** (jusqu'à 3 tentatives) en cas d'absence d'ACK
+- ✅ **Délai aléatoire** entre retransmissions (10-40 ms) pour éviter les collisions
+- ✅ **Détection et élimination des doublons** via nonce + séquence
+- ✅ Le système **garantit la livraison** ou notifie l'échec
 
 ---
 
@@ -82,9 +108,9 @@ vehicle_affectation,SD304FR,45.797200,4.847000,1736172600
 | Indicateur | Signification |
 |------------|---------------|
 | 🟢 Pixel (4,4) allumé | Système actif et en fonctionnement |
-| **T** | Position transmise avec succès par radio |
-| **!** | Erreur lors de la transmission radio |
-| **A** | Affectation reçue par radio et transmise au simulateur |
+| **T** | Position transmise avec succès et ACK reçu |
+| **!** | Échec de transmission (aucun ACK reçu après 3 tentatives) |
+| **A** | Affectation reçue, ACK envoyé et transmise au simulateur |
 
 ---
 
@@ -99,14 +125,17 @@ vehicle_affectation,SD304FR,45.797200,4.847000,1736172600
 
 ## 🏗️ Architecture système
 
-Cette architecture permet au simulateur Java d'**envoyer des positions de véhicules** qui sont diffusées sur le réseau radio terrain, et de **recevoir en temps réel** les affectations de véhicules à des incidents provenant du réseau SDMIS sécurisé. 
+Cette architecture permet au simulateur Java d'**envoyer des positions de véhicules** qui sont diffusées sur le réseau radio terrain **avec confirmation de réception**, et de **recevoir en temps réel** les affectations de véhicules à des incidents provenant du réseau SDMIS sécurisé. 
 
-La Micro:bit agit comme un **pont transparent** gérant le chiffrement/déchiffrement automatiquement.
+La Micro:bit agit comme un **pont transparent** gérant le chiffrement, le déchiffrement, la conversion de format et le **protocole d'acquittement** pour garantir la fiabilité des communications même en environnement radio perturbé.
 ```
 ┌─────────────┐      UART       ┌──────────┐      Radio       ┌─────────────┐
 │ Simulateur  │ ←─────────────→ │ Micro:bit│ ←──────────────→ │   Réseau    │
-│    Java     │   115200 bps    │ Passerelle│   AES-128       │   SDMIS     │
+│    Java     │   115200 bps    │ Passerelle│   AES-128+ACK   │   SDMIS     │
 └─────────────┘                 └──────────┘                  └─────────────┘
+                                      ↕
+                           Gestion ACK/Retries
+                           Détection doublons
 ```
 
 ---
@@ -163,28 +192,6 @@ iot-terrain-microbit/
 
 ---
 
-## ⚠️ Points à détailler
-
-### 🎮 Mapping des entrées
-
-- [ ] Définir l'association boutons/inputs → messages envoyés
-- [ ] Implémenter les actions manuelles (A, B, A+B, shake, etc.)
-
-### 📶 Gestion de la fiabilité radio
-
-- [ ] Politique de retransmission (retries)
-- [ ] Mécanisme d'acquittement (ACK éventuel)
-- [ ] Définir la cadence d'envoi GPS (ex: toutes les 30s)
-- [ ] Gestion des pertes de communication
-
-### 🔑 Configuration par véhicule
-
-- [ ] Système de provisionnement des clés cryptographiques
-- [ ] Attribution des identifiants véhicule uniques
-- [ ] Méthode de configuration (hardcodé, fichier config, OTA?)
-
----
-
 ## 🚀 Utilisation terrain
 
 1. **Initialisation** : Flash du firmware avec identifiant véhicule unique
@@ -201,4 +208,4 @@ Le micro:bit terrain communique avec :
 - **Simulateur Java** (indirectement via la passerelle)
 - **Autres véhicules** (réseau maillé possible)
 
-Tous les échanges respectent le protocole SDMIS crypté (AES-128 + CMAC).
+Tous les échanges respectent le protocole SDMIS crypté (AES-128 + CMAC) avec **système d'acquittement** garantissant la fiabilité des transmissions.
