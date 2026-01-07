@@ -121,10 +121,10 @@ Cette architecture permet au simulateur Java d'**envoyer des positions de véhic
 
 La Micro:bit agit comme un **pont transparent** gérant le chiffrement, le déchiffrement, la conversion de format et le **protocole d'acquittement** pour garantir la fiabilité des communications même en environnement radio perturbé.
 ```
-┌─────────────┐      UART       ┌──────────┐      Radio       ┌─────────────┐
-│ Simulateur  │ ←─────────────→ │ Micro:bit│ ←──────────────→ │   Réseau    │
-│    Java     │   115200 bps    │ Passerelle│   AES-128+ACK   │   SDMIS     │
-└─────────────┘                 └──────────┘                  └─────────────┘
+┌─────────────┐      UART       ┌───────────┐      Radio       ┌─────────────┐
+│ Simulateur  │ ←─────────────→ │ Micro:bit │ ←──────────────→ │   Réseau    │
+│    Java     │   115200 bps    │ Passerelle│   AES-128+ACK    │   SDMIS     │
+└─────────────┘                 └───────────┘                  └─────────────┘
                                       ↕
                            Gestion ACK/Retries
                            Détection doublons
