@@ -159,7 +159,8 @@ Micro:bit embarqué dans le véhicule pour émettre les informations terrain par
 ### Compilation
 ```bash
 cd iot-terrain-microbit
-python3 build.py
+make clean
+make build
 # Génère MICROBIT.hex et MICROBIT.bin à la racine
 ```
 
