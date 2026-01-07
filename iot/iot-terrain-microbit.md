@@ -198,6 +198,3 @@ iot-terrain-microbit/
 Le micro:bit terrain communique avec :
 - **Passerelle centrale** (via radio groupe 42)
 - **Simulateur Java** (indirectement via la passerelle)
-- **Autres véhicules** (réseau maillé possible)
-
-Tous les échanges respectent le protocole SDMIS crypté (AES-128 + CMAC) avec **système d'acquittement** garantissant la fiabilité des transmissions.
