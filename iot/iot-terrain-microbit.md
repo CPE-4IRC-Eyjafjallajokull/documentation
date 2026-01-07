@@ -1,5 +1,3 @@
-# Documentation Système SDMIS - Micro:bit
-
 # Passerelle Micro:bit UART ↔ Radio SDMIS
 
 ## 🎯 Vue d'ensemble
