@@ -1,5 +1,5 @@
 # Passerelle Micro:bit UART ↔ Radio SDMIS
-
+Récepteur radio côté Simulation : Recoit les trames des véhicules terrain et les envoies en radio.
 ## 🎯 Vue d'ensemble
 
 La carte **Micro:bit** fonctionne comme une passerelle bidirectionnelle entre un simulateur Java (via liaison série UART) et un réseau radio IoT terrain utilisant le protocole **SDMIS crypté avec acquittement**.
