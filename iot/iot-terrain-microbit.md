@@ -99,7 +99,7 @@ vehicle_affectation,SD304FR,45.797200,4.847000,1736172600
 
 | Indicateur | Signification |
 |------------|---------------|
-| 🟢 Pixel (4,4) allumé | Système actif et en fonctionnement |
+| Pixel (4,4) allumé | Système actif et en fonctionnement |
 | **T** | Position transmise avec succès et ACK reçu |
 | **!** | Échec de transmission (aucun ACK reçu après 3 tentatives) |
 | **A** | Affectation reçue, ACK envoyé et transmise au simulateur |
@@ -108,10 +108,10 @@ vehicle_affectation,SD304FR,45.797200,4.847000,1736172600
 
 ## 🔧 Déploiement
 
-1. 🔌 Connexion de la Micro:bit au PC via câble USB
-2. 💾 Flash du firmware compilé sur la carte
-3. ▶️ Lancement du simulateur Java configuré sur le port série approprié
-4. ✨ La passerelle assure automatiquement la communication bidirectionnelle entre le simulateur et le réseau radio
+1. Connexion de la Micro:bit au PC via câble USB
+2. Flash du firmware compilé sur la carte
+3. Lancement du simulateur Java configuré sur le port série approprié
+4. La passerelle assure automatiquement la communication bidirectionnelle entre le simulateur et le réseau radio
 
 ---
 
