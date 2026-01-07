@@ -1,11 +1,5 @@
 # Documentation Système SDMIS - Micro:bit
 
-## Table des matières
-- [Passerelle Micro:bit UART ↔ Radio SDMIS](#passerelle-microbit-uart--radio-sdmis)
-- [App Terrain micro:bit (émetteur)](#-app-terrain-microbit-émetteur)
-
----
-
 # Passerelle Micro:bit UART ↔ Radio SDMIS
 
 ## 🎯 Vue d'ensemble
