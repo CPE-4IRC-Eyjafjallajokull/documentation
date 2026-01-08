@@ -129,7 +129,7 @@ Comprend :
    - Terrain : Flash sur micro:bit #2
    
 5. **Lancer le simulateur Java**
-   - Port série : `/dev/ttyACM0` (Linux) ou `COM3` (Windows)
+   - Port série : `/dev/ttyACM0` (Linux) ou `COM4` (Windows)
    - Baudrate : 115200
 
 6. **Tester**
