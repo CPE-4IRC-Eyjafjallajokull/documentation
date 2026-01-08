@@ -120,7 +120,7 @@ Comprend :
 
 3. **Compiler les firmwares**
    ```bash
-   make build
+   make clean && make build
    # Génère: out/iot-terrain-microbit.hex
    ```
 

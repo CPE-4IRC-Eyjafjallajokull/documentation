@@ -368,8 +368,7 @@ int main() {
 
 ```bash
 cd iot-terrain-microbit
-make clean
-make build
+make clean && make build
 ```
 
 **Sortie :**
@@ -424,8 +423,6 @@ static char MY_IMMAT[] = "VSAV304";  // Changer ici
 **Ou via #define :**
 
 ```bash
-# Compilation avec variable
-make build CFLAGS="-DMY_IMMAT=\\\"VSAV042\\\""
 ```
 
 ---

@@ -402,7 +402,7 @@ static const uint8_t CPE_KEY[16] = {
 **Passerelle UART-Radio :**
 ```bash
 cd iot-terrain-microbit
-make build
+make clean && make build
 # Génère: out/iot-terrain-microbit.hex
 ```
 
@@ -410,7 +410,7 @@ make build
 ```bash
 cd iot-terrain-microbit
 # Modifier source/main.cpp pour mode terrain
-make build
+make clean && make build
 # Génère: out/iot-terrain-microbit.hex
 ```
 
