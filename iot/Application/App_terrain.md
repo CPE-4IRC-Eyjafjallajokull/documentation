@@ -1,17 +1,17 @@
-# Application Terrain Micro:bit (Émetteur)
+# Application Terrain Micro:bit
 
-Micro:bit embarqué dans les véhicules d'intervention pour émettre les informations terrain par radio (positions, états, messages opérateur).
+Micro:bit embarqué dans les véhicules d'intervention pour transmettre les positions GPS et statuts par radio.
 
 ---
 
 ## 🎯 Rôle et objectifs
 
-L'application terrain transforme une carte BBC Micro:bit en **émetteur radio sécurisé** embarqué dans un véhicule d'intervention (pompier, SAMU, police) pour transmettre en temps réel :
+L'application terrain transforme une carte BBC Micro:bit en **passerelle radio** embarquée dans un véhicule d'intervention. Elle :
 
-- 📍 **Position GPS** : Coordonnées géographiques du véhicule
-- 📊 **Statut opérationnel** : Disponible, en route, sur intervention, etc.
-- 🔘 **Événements manuels** : Arrivée sur site, fin d'intervention, demande de renfort
-- 📻 **Réception d'affectations** : Incidents assignés par le centre de commandement
+- 📡 **Reçoit via UART** : Positions GPS et statuts depuis un système embarqué (tablette, GPS)
+- 📻 **Émet par radio** : Transmet les données chiffrées au centre de commandement (trame CPE 29 octets)
+- 📥 **Reçoit par radio** : Affectations d'incidents depuis la centrale
+- 💻 **Renvoie via UART** : Transmet les affectations au système embarqué
 
 ---
 
@@ -20,11 +20,12 @@ L'application terrain transforme une carte BBC Micro:bit en **émetteur radio s�
 | Paramètre | Valeur | Description |
 |-----------|--------|-------------|
 | **Plateforme** | BBC Micro:bit v1 | Basé sur nRF51822 (ARM Cortex-M0) |
+| **UART** | 115200 baud | Communication avec système embarqué |
+| **Buffer UART RX** | 254 octets | Taille max buffer réception |
 | **Groupe radio** | 42 | Identifiant réseau SDMIS |
 | **Puissance radio** | 7 (maximum) | Portée ~150 m extérieur |
 | **Chiffrement** | AES-128 CTR | Avec clé pré-partagée 16 octets |
-| **Protocole** | CPE + SDMIS | Avec acquittement et retransmission |
-| **Fréquence d'envoi** | Configurable | Par défaut : toutes les 5-10 secondes |
+| **Protocole CPE** | 29 octets | Header 9 + payload chiffré 20 octets |
 
 ### Clé cryptographique
 
@@ -46,32 +47,39 @@ static const uint8_t CPE_KEY[16] = {
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                  Application Terrain                    │
+│       Système embarqué (Tablette, GPS, Ordi)           │
+│  Envoie CSV: vehicle_position,status,immat,lat,lon,ts  │
+│          ou: vehicle_status,status,immat,0,0,ts         │
+└───────────────────────┬─────────────────────────────────┘
+                        │ UART 115200 baud
+                        ↓
+┌─────────────────────────────────────────────────────────┐
+│            Application Terrain (main.cpp)               │
 ├─────────────────────────────────────────────────────────┤
-│  • Boucle principale (10 ms)                            │
-│  • Gestion boutons A/B                                  │
-│  • Envoi périodique positions                           │
-│  • Réception affectations                               │
+│  • Lecture UART caractère par caractère                 │
+│  • Buffer jusqu'à '\n' (ligne complète)                 │
+│  • Parse CSV → appel SDMIS selon événement              │
+│  • Poll radio → envoi UART si affectation               │
+│  • Boucle 10 ms + pixel (4,4) fixe = système actif     │
 └───────────────────┬─────────────────────────────────────┘
                     │
                     ↓
 ┌─────────────────────────────────────────────────────────┐
-│              Librairie SDMIS_RADIO                      │
+│                Librairie SDMIS_RADIO                    │
 ├─────────────────────────────────────────────────────────┤
-│  • sdmis_radio_init()                                   │
-│  • sdmis_radio_send_position()                          │
-│  • sdmis_radio_send_status()                            │
-│  • sdmis_radio_poll()                                   │
-│  • Gestion ACK/Retry automatique                        │
+│  • sdmis_radio_send_position() → LED "T" ou "!"         │
+│  • sdmis_radio_send_status() → LED "S" ou "!"           │
+│  • sdmis_radio_poll() → détecte affectations            │
+│  • Gestion ACK/Retry auto (3 × 200ms timeout)           │
 └───────────────────┬─────────────────────────────────────┘
                     │
                     ↓
 ┌─────────────────────────────────────────────────────────┐
-│                 Protocole CPE                           │
+│                   Protocole CPE                         │
 ├─────────────────────────────────────────────────────────┤
-│  • Chiffrement AES-128                                  │
-│  • Validation CRC-16                                    │
-│  • Format trame 29 octets                               │
+│  • Trame fixe 29 octets (header 9 + payload 20)        │
+│  • Chiffrement AES-128 CTR                              │
+│  • CRC-16 CCITT pour intégrité                          │
 └───────────────────┬─────────────────────────────────────┘
                     │
                     ↓
@@ -84,120 +92,120 @@ static const uint8_t CPE_KEY[16] = {
 
 ## 📱 Interface utilisateur
 
-### Boutons physiques
-
-| Bouton | Action courte | Action longue | LED |
-|--------|---------------|---------------|-----|
-| **A** | Changement de statut | Demande de renfort | Cœur |
-| **B** | Arrivée sur site | Fin d'intervention | Carré |
-| **A+B** | Envoi position immédiat | Reset compteurs | Croix |
-
 ### Écran LED 5×5
 
-| Affichage | Signification | Durée |
-|-----------|---------------|-------|
-| Pixel (4,4) fixe | Système actif | Permanent |
-| **✓** | Position envoyée avec ACK | 1 seconde |
-| **✗** | Échec d'envoi (pas d'ACK) | 2 secondes |
-| **→** | Affectation reçue | 1 seconde |
-| **Cœur** | Disponible | Après changement statut |
-| **Carré** | En mission | Après changement statut |
-| Chiffre | Nombre de messages envoyés | Après A+B |
+| Affichage | Signification | Contexte |
+|-----------|---------------|----------|
+| Pixel (4,4) allumé | Système actif | Permanent (boucle principale) |
+| **T** | Position transmise avec succès | ACK reçu après vehicle_position |
+| **S** | Statut transmis avec succès | ACK reçu après vehicle_status |
+| **!** | Échec de transmission | Pas d'ACK après 3 tentatives |
+| **A** | Affectation d'incident reçue | Trame INCIDENT_AFFECT déchiffrée |
+
+**Interface** : Pas de boutons. Contrôle 100% via UART (tablette, GPS, ordi embarqué).
 
 ---
 
 ## 🔄 Fonctionnement
 
-### Mode automatique : Envoi périodique de positions
+### Format CSV sur UART
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  Boucle infinie (cycle: 5-10 secondes)                  │
-├─────────────────────────────────────────────────────────┤
-│  1. Acquisition position GPS (ou simulation)            │
-│     └─ lat, lon en degrés décimaux                      │
-├─────────────────────────────────────────────────────────┤
-│  2. Conversion micro-degrés (×10⁶)                      │
-│     └─ 48.856614° → 48856614                            │
-├─────────────────────────────────────────────────────────┤
-│  3. Lecture timestamp actuel                            │
-│     └─ Secondes depuis epoch Unix                       │
-├─────────────────────────────────────────────────────────┤
-│  4. Appel sdmis_radio_send_position()                   │
-│     ├─ Génération nonce/séquence auto                   │
-│     ├─ Chiffrement AES-128                              │
-│     ├─ Transmission radio                               │
-│     └─ Attente ACK (3 tentatives max)                   │
-├─────────────────────────────────────────────────────────┤
-│  5. Affichage résultat                                  │
-│     ├─ ✓ si ACK reçu                                    │
-│     └─ ✗ si échec après 3 tentatives                    │
-├─────────────────────────────────────────────────────────┤
-│  6. Sleep jusqu'au prochain cycle                       │
-└─────────────────────────────────────────────────────────┘
+**Structure** : `event,status,immat,lat,lon,timestamp`
+
+| Champ | Type | Format | Exemple |
+|-------|------|--------|----------|
+| event | String | `vehicle_position` ou `vehicle_status` | `vehicle_position` |
+| status | uint8 | 0=Disponible, 1=Engagé, 2=Sur intervention, 3=Transport, 4=Retour, 5=Indisponible, 6=Hors service | `1` |
+| immat | String | 8 caractères max | `AB123CD` |
+| lat | Float | Degrés décimaux (6 décimales) | `48.856614` |
+| lon | Float | Degrés décimaux (6 décimales) | `2.352222` |
+| timestamp | uint32 | Secondes depuis epoch Unix | `1736172600` |
+
+### 1️⃣ Envoi de position (UART → Radio)
+
+**Réception UART :**
+```csv
+vehicle_position,1,AB123CD,48.856614,2.352222,1736172600
 ```
 
-### Mode manuel : Bouton A (Changement de statut)
-
+**Flux :**
 ```
-Appui bouton A détecté
-        ↓
-Cycle des statuts:
-  1 → 2 → 3 → 4 → 5 → 1
-        ↓
-Appel sdmis_radio_send_status(immat, new_status, timestamp)
-        ↓
-Transmission avec ACK/Retry
-        ↓
-Affichage ✓ ou ✗
-        ↓
-Affichage icône statut (Cœur/Carré/etc.)
+┌──────────────────────────────────────────────────────────┐
+│  1. Réception UART caractère par caractère               │
+│     └─ Buffer jusqu'à '\n'                               │
+├──────────────────────────────────────────────────────────┤
+│  2. Parse CSV: event, status, immat, lat, lon, ts       │
+│     └─ Vérifie event == "vehicle_position"               │
+├──────────────────────────────────────────────────────────┤
+│  3. Conversion: 48.856614 → 48856614 (×10⁶)             │
+├──────────────────────────────────────────────────────────┤
+│  4. Appel sdmis_radio_send_position()                    │
+│     ├─ Génère nonce et séquence automatiquement         │
+│     ├─ Construit trame CPE 29 octets                    │
+│     ├─ Chiffre AES-128 CTR + CRC-16                     │
+│     └─ Envoie avec attente ACK (3 tentatives)           │
+├──────────────────────────────────────────────────────────┤
+│  5. Affichage LED: "T" si ACK, "!" si échec              │
+└──────────────────────────────────────────────────────────┘
+```
+
+### 2️⃣ Envoi de statut (UART → Radio)
+
+**Réception UART :**
+```csv
+vehicle_status,2,AB123CD,0,0,1736172600
+```
+_(status 2 = Sur intervention)_
+
+**Flux :**
+```
+┌──────────────────────────────────────────────────────────┐
+│  1. Parse CSV: event, status, immat, _, _, ts           │
+│     └─ Vérifie event == "vehicle_status"                 │
+├──────────────────────────────────────────────────────────┤
+│  2. Appel sdmis_radio_send_status()                      │
+│     └─ Trame CPE sans coordonnées (lat=0, lon=0)        │
+├──────────────────────────────────────────────────────────┤
+│  3. Affichage LED: "S" si ACK, "!" si échec              │
+└──────────────────────────────────────────────────────────┘
 ```
 
 **Codes de statut :**
-| Code | Signification | Icône |
-|------|---------------|-------|
-| 1 | Disponible | ❤️ Cœur |
-| 2 | En route | → Flèche |
-| 3 | Sur intervention | 🔲 Carré |
-| 4 | Retour caserne | ↩️ Flèche retour |
-| 5 | Hors service | ✖️ Croix |
+| Code | Signification |
+|------|---------------|
+| 0 | Disponible |
+| 1 | Engagé |
+| 2 | Sur intervention |
+| 3 | Transport |
+| 4 | Retour |
+| 5 | Indisponible |
+| 6 | Hors service |
 
-### Mode manuel : Bouton B (Événements terrain)
+### 3️⃣ Réception d'affectation (Radio → UART)
 
+**Flux :**
 ```
-Appui bouton B détecté
-        ↓
-Détermination type événement:
-  - Appui court: "Arrivée sur site"
-  - Appui long (>1s): "Fin d'intervention"
-        ↓
-Acquisition position GPS actuelle
-        ↓
-Appel sdmis_radio_send_position(immat, lat, lon, status_event, ts)
-        ↓
-Transmission avec ACK/Retry
-        ↓
-Affichage ✓ ou ✗
+┌──────────────────────────────────────────────────────────┐
+│  1. sdmis_radio_poll() détecte trame radio              │
+├──────────────────────────────────────────────────────────┤
+│  2. Déchiffrement et validation automatiques             │
+│     └─ ACK envoyé immédiatement                          │
+├──────────────────────────────────────────────────────────┤
+│  3. Vérifie type == CPE_FT_INCIDENT_AFFECT               │
+├──────────────────────────────────────────────────────────┤
+│  4. Extraction: immat, status, lat_e6, lon_e6, ts       │
+├──────────────────────────────────────────────────────────┤
+│  5. Conversion: 48856614 → 48.856614 (÷10⁶)             │
+├──────────────────────────────────────────────────────────┤
+│  6. Construction CSV et envoi UART                       │
+├──────────────────────────────────────────────────────────┤
+│  7. Affichage LED "A"                                    │
+└──────────────────────────────────────────────────────────┘
 ```
 
-### Réception d'affectations
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  Dans la boucle principale (toutes les 10 ms)           │
-├─────────────────────────────────────────────────────────┤
-│  1. Appel sdmis_radio_poll(&frame)                      │
-│     └─ Vérifie si trame radio reçue                     │
-├─────────────────────────────────────────────────────────┤
-│  2. Si trame disponible:                                │
-│     ├─ Déjà déchiffrée et validée                       │
-│     └─ ACK déjà envoyé automatiquement                  │
-├─────────────────────────────────────────────────────────┤
-│  3. Vérification type = INCIDENT_AFFECT                 │
-├─────────────────────────────────────────────────────────┤
-│  4. Extraction données:                                 │
-│     ├─ Immatriculation du véhicule affecté              │
+**Envoi UART :**
+```csv
+vehicle_affectation,0,SD304FR,45.797200,4.847000,1736172600
 │     ├─ Latitude de l'incident                           │
 │     ├─ Longitude de l'incident                          │
 │     └─ Timestamp                                        │

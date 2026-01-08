@@ -23,18 +23,23 @@ La carte **Micro:bit** fonctionne comme une passerelle bidirectionnelle entre un
 
 ### 1️⃣ Communication UART → Radio (Java → Terrain)
 
-Le simulateur Java envoie des positions de véhicules au format CSV contenant l'événement `vehicle_position`, suivi de l'immatriculation, de la latitude, de la longitude et du timestamp.
+Le simulateur Java envoie des positions de véhicules au format CSV contenant l'événement (vehicle_position ou vehicle_status), le code de statut, l'immatriculation, la latitude, la longitude et le timestamp.
 
 **Actions effectuées :**
 
-1. Réception de la ligne CSV via UART
-2. Analyse des données : événement, immatriculation, latitude, longitude, timestamp
+1. Réception de la ligne CSV via UART (caractère par caractère jusqu'à '\n')
+2. Analyse des données : événement, status, immatriculation, latitude, longitude, timestamp
 3. Si l'événement est `vehicle_position` :
-   - Chiffrement de la trame avec **numéro de séquence unique**
-   - Transmission de la position via radio SDMIS
+   - Conversion coordonnées décimales → micro-degrés (×10⁶)
+   - Appel `sdmis_radio_send_position()` avec status
+   - Chiffrement de la trame CPE 29 octets avec **numéro de séquence unique**
+   - Transmission via radio SDMIS
    - **Attente d'un ACK** pendant 200 ms maximum
    - Si aucun ACK reçu : **retransmission jusqu'à 3 tentatives** avec délai aléatoire (10-40 ms)
-   - Affichage de **"T"** (Transmis avec ACK reçu) ou **"!"** (Erreur, aucun ACK après 3 tentatives) sur l'écran
+   - Affichage de **"T"** (Transmis avec ACK reçu) ou **"!"** (Erreur, aucun ACK après 3 tentatives)
+4. Si l'événement est `vehicle_status` :
+   - Appel `sdmis_radio_send_status()` (trame CPE sans coordonnées GPS)
+   - Affichage de **"S"** (Statut avec ACK) ou **"!"** (Erreur)
 
 ### 2️⃣ Communication Radio → UART (Terrain → Java)
 
@@ -55,21 +60,37 @@ Lorsqu'un message radio de type affectation de véhicule à un incident est reç
 
 ### Format CSV échangé sur UART
 
-Le format est structuré en **cinq champs** séparés par des virgules :
+Le format est structuré en **six champs** séparés par des virgules :
 ```
-événement,immatriculation,latitude_décimale,longitude_décimale,timestamp_unix
+événement,status,immatriculation,latitude_décimale,longitude_décimale,timestamp_unix
 ```
+
+| Champ | Type | Exemple |
+|-------|------|---------|
+| événement | String | `vehicle_position`, `vehicle_status`, `vehicle_affectation` |
+| status | uint8 | `0` (Disponible), `1` (Engagé), `2` (Sur intervention), `3` (Transport), `4` (Retour), `5` (Indisponible), `6` (Hors service) |
+| immatriculation | String (8 max) | `AB123CD` |
+| latitude | Float (6 décimales) | `48.856614` |
+| longitude | Float (6 décimales) | `2.352222` |
+| timestamp | uint32 | `1736172600` (secondes Unix) |
 
 ### Exemples de messages
 
 **📤 Envoi d'une position de véhicule (Java → Micro:bit) :**
 ```csv
-vehicle_position,AB123CD,48.856614,2.352222,1736172600
+vehicle_position,1,AB123CD,48.856614,2.352222,1736172600
 ```
+_(status 1 = Engagé)_
+
+**📤 Envoi d'un changement de statut (Java → Micro:bit) :**
+```csv
+vehicle_status,2,AB123CD,0,0,1736172600
+```
+_(status 2 = Sur intervention)_
 
 **📥 Réception d'une affectation (Micro:bit → Java) :**
 ```csv
-vehicle_affectation,SD304FR,45.797200,4.847000,1736172600
+vehicle_affectation,0,SD304FR,45.797200,4.847000,1736172600
 ```
 
 > **Taille typique :** ~59 octets par message transmis sur UART
@@ -100,7 +121,8 @@ vehicle_affectation,SD304FR,45.797200,4.847000,1736172600
 | Indicateur | Signification |
 |------------|---------------|
 | Pixel (4,4) allumé | Système actif et en fonctionnement |
-| **T** | Position transmise avec succès et ACK reçu |
+| **T** | Position transmise avec succès (vehicle_position + ACK reçu) |
+| **S** | Statut transmis avec succès (vehicle_status + ACK reçu) |
 | **!** | Échec de transmission (aucun ACK reçu après 3 tentatives) |
 | **A** | Affectation reçue, ACK envoyé et transmise au simulateur |
 
