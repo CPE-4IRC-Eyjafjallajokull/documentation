@@ -112,13 +112,7 @@ Comprend :
    cd iot-terrain-microbit
    ```
 
-2. **Générer une clé cryptographique**
-   ```bash
-   openssl rand -hex 16
-   # Copier dans source/main.cpp (CPE_KEY)
-   ```
-
-3. **Compiler les firmwares**
+2. **Compiler les firmwares**
    ```bash
    make clean && make build
    # Génère: out/iot-terrain-microbit.hex
