@@ -435,7 +435,7 @@ cp out/iot-terrain-microbit.hex /media/$USER/MICROBIT/
 // Configuration port série
 String port = "/dev/ttyACM0";  // Linux
 // String port = "/dev/tty.usbmodem*";  // macOS
-// String port = "COM3";  // Windows
+// String port = "COM4";  // Windows
 
 int baudrate = 115200;
 ```
