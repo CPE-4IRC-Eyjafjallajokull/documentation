@@ -6,7 +6,7 @@ Documentation complète du système de communication radio sécurisée pour véh
 
 ## 📖 Guides principaux
 
-### 🎯 [Vue d'ensemble du système](SYSTEME_COMPLET.md)
+### 🎯 [Vue d'ensemble du système](Systeme_complet/Systeme_complet.md)
 **Pour qui** : Chef de projet, architecte, développeur débutant  
 **Contenu** : Architecture globale, flux de communication, déploiement complet  
 **⏱️ Lecture** : 20-30 minutes
@@ -22,7 +22,7 @@ Comprend :
 
 ## 🔧 Documentation des composants
 
-### 📡 [Passerelle UART ↔ Radio](PASSERELLE_UART_RADIO.md)
+### 📡 [Passerelle UART ↔ Radio](Passerelles/Passerelle_UART_radio.md)
 **Pour qui** : Développeur, intégrateur  
 **Contenu** : Passerelle bidirectionnelle entre simulateur Java et réseau radio  
 **⏱️ Lecture** : 15 minutes
@@ -37,7 +37,7 @@ Comprend :
 
 ---
 
-### 📱 [Application Terrain (Émetteur)](APP_TERRAIN.md)
+### 📱 [Application Terrain (Émetteur)](Applications/App_terrain.md)
 **Pour qui** : Développeur embarqué  
 **Contenu** : Carte micro:bit embarquée dans les véhicules  
 **⏱️ Lecture** : 15 minutes
@@ -52,7 +52,7 @@ Comprend :
 
 ---
 
-### 🏢 [Passerelle RF Centrale](PASSERELLE_RF_CENTRALE.md)
+### 🏢 [Passerelle RF Centrale](Passerelles/Passerelle_RF_centrale.md)
 **Pour qui** : Développeur backend, DevOps  
 **Contenu** : Récepteur central vers API backend  
 **⏱️ Lecture** : 10 minutes
@@ -68,7 +68,7 @@ Comprend :
 
 ## 🔐 Documentation technique protocolaire
 
-### 🔒 [Protocole CPE](PROTOCOLE_CPE.md)
+### 🔒 [Protocole CPE](Protocole/Protocole_CPE.md)
 **Pour qui** : Développeur système, cryptographe  
 **Contenu** : Spécification complète du protocole de chiffrement  
 **⏱️ Lecture** : 25 minutes
@@ -84,7 +84,7 @@ Comprend :
 
 ---
 
-### 📻 [Librairie SDMIS_RADIO](SDMIS_RADIO.md)
+### 📻 [Librairie SDMIS_RADIO](Librairie/SDMIS_radio.md)
 **Pour qui** : Développeur micro:bit  
 **Contenu** : API haut niveau pour communication radio fiable  
 **⏱️ Lecture** : 20 minutes
@@ -142,11 +142,11 @@ Comprend :
 
 | Problème | Voir documentation | Section |
 |----------|-------------------|---------|
-| Aucune communication radio | [SYSTEME_COMPLET](SYSTEME_COMPLET.md) | Diagnostic problèmes |
-| ACK non reçus | [SDMIS_RADIO](SDMIS_RADIO.md) | Dépannage |
-| Erreur compilation | [APP_TERRAIN](APP_TERRAIN.md) | Compilation |
-| Messages CSV invalides | [PASSERELLE_UART_RADIO](PASSERELLE_UART_RADIO.md) | Format données |
-| Clé cryptographique | [PROTOCOLE_CPE](PROTOCOLE_CPE.md) | Sécurité |
+| Aucune communication radio | [SYSTEME_COMPLET](Systeme_complet/Systeme_complet.md) | Diagnostic problèmes |
+| ACK non reçus | [SDMIS_RADIO](Librairie/SDMIS_radio.md) | Dépannage |
+| Erreur compilation | [APP_TERRAIN](Applications/App_terrain.md) | Compilation |
+| Messages CSV invalides | [PASSERELLE_UART_RADIO](Passerelles/Passerelle_UART_radio.md) | Format données |
+| Clé cryptographique | [PROTOCOLE_CPE](Protocole/Protocole_CPE.md) | Sécurité |
 
 ---
 
@@ -165,18 +165,18 @@ Comprend :
 
 | Type | Taille | Chiffrement | Documentation |
 |------|--------|-------------|---------------|
-| CPE | 29 octets | AES-128 CTR | [PROTOCOLE_CPE](PROTOCOLE_CPE.md) |
-| ACK | 1 octet | Non | [SDMIS_RADIO](SDMIS_RADIO.md) |
-| CSV UART | ~60 octets | Non | [PASSERELLE_UART_RADIO](PASSERELLE_UART_RADIO.md) |
+| CPE | 29 octets | AES-128 CTR | [PROTOCOLE_CPE](Protocole/Protocole_CPE.md) |
+| ACK | 1 octet | Non | [SDMIS_RADIO](Librairie/SDMIS_radio.md) |
+| CSV UART | ~60 octets | Non | [PASSERELLE_UART_RADIO](Passerelles/Passerelle_UART_radio.md) |
 
 ### Latences typiques
 
 | Opération | Latence | Documentation |
 |-----------|---------|---------------|
-| UART → Radio (succès) | 30-50 ms | [PASSERELLE_UART_RADIO](PASSERELLE_UART_RADIO.md) |
-| UART → Radio (échec 3×) | ~650 ms | [PASSERELLE_UART_RADIO](PASSERELLE_UART_RADIO.md) |
-| Radio → UART | 10-20 ms | [PASSERELLE_UART_RADIO](PASSERELLE_UART_RADIO.md) |
-| Bouton → TX | 20-50 ms | [APP_TERRAIN](APP_TERRAIN.md) |
+| UART → Radio (succès) | 30-50 ms | [PASSERELLE_UART_RADIO](Passerelles/Passerelle_UART_radio.md) |
+| UART → Radio (échec 3×) | ~650 ms | [PASSERELLE_UART_RADIO](Passerelles/Passerelle_UART_radio.md) |
+| Radio → UART | 10-20 ms | [PASSERELLE_UART_RADIO](Passerelles/Passerelle_UART_radio.md) |
+| Bouton → TX | 20-50 ms | [APP_TERRAIN](Applications/App_terrain.md) |
 
 ---
 
@@ -184,30 +184,30 @@ Comprend :
 
 ### Pour débuter (Nouveau développeur)
 
-1. ⭐ [Vue d'ensemble du système](SYSTEME_COMPLET.md) - Comprendre l'architecture
-2. ⭐ [Passerelle UART-Radio](PASSERELLE_UART_RADIO.md) - Commencer par le composant central
-3. [Librairie SDMIS_RADIO](SDMIS_RADIO.md) - Comprendre l'API
+1. ⭐ [Vue d'ensemble du système](Systeme_complet/Systeme_complet.md) - Comprendre l'architecture
+2. ⭐ [Passerelle UART-Radio](Passerelles/Passerelle_UART_radio.md) - Commencer par le composant central
+3. [Librairie SDMIS_RADIO](Librairie/SDMIS_radio.md) - Comprendre l'API
 4. [Guide démarrage rapide](#-guide-de-démarrage-rapide) - Mise en pratique
 
 ### Pour développer (Contributeur)
 
-1. [Protocole CPE](PROTOCOLE_CPE.md) - Comprendre la couche crypto
-2. [Librairie SDMIS_RADIO](SDMIS_RADIO.md) - Comprendre la couche fiabilité
-3. [Application Terrain](APP_TERRAIN.md) - Voir cas d'usage complet
+1. [Protocole CPE](Protocole/Protocole_CPE.md) - Comprendre la couche crypto
+2. [Librairie SDMIS_RADIO](Librairie/SDMIS_radio.md) - Comprendre la couche fiabilité
+3. [Application Terrain](Applications/App_terrain.md) - Voir cas d'usage complet
 4. Code source dans `source/`
 
 ### Pour déployer (Ops/Intégrateur)
 
-1. [Vue d'ensemble](SYSTEME_COMPLET.md) - Section "Installation et déploiement"
-2. [Passerelle UART-Radio](PASSERELLE_UART_RADIO.md) - Section "Déploiement"
-3. [Application Terrain](APP_TERRAIN.md) - Section "Compilation et déploiement"
-4. [Passerelle RF Centrale](PASSERELLE_RF_CENTRALE.md) - Si backend utilisé
+1. [Vue d'ensemble](Systeme_complet/Systeme_complet.md) - Section "Installation et déploiement"
+2. [Passerelle UART-Radio](Passerelles/Passerelle_UART_radio.md) - Section "Déploiement"
+3. [Application Terrain](Applications/App_terrain.md) - Section "Compilation et déploiement"
+4. [Passerelle RF Centrale](Passerelles/Passerelle_RF_centrale.md) - Si backend utilisé
 
 ### Pour sécuriser (RSSI/Auditeur)
 
-1. [Protocole CPE](PROTOCOLE_CPE.md) - Section "Sécurité"
-2. [Vue d'ensemble](SYSTEME_COMPLET.md) - Section "Sécurité du système"
-3. [Passerelle UART-Radio](PASSERELLE_UART_RADIO.md) - Section "Sécurité et fiabilité"
+1. [Protocole CPE](Protocole/Protocole_CPE.md) - Section "Sécurité"
+2. [Vue d'ensemble](Systeme_complet/Systeme_complet.md) - Section "Sécurité du système"
+3. [Passerelle UART-Radio](Passerelles/Passerelle_UART_radio.md) - Section "Sécurité et fiabilité"
 4. Recommandations de rotation de clés
 
 ---
