@@ -1,317 +1,133 @@
-# 📚 Index des Documentations - Système SDMIS IoT Terrain
+# Documentation IoT - Système de Communication Radio
 
-Documentation complète du système de communication radio sécurisée pour véhicules d'intervention.
+## Vue d'ensemble
 
----
+Ce système IoT permet la communication bidirectionnelle entre des véhicules de terrain équipés de micro:bit et l'API centrale via une passerelle RF. Il utilise le protocole CPE sécurisé (AES-128) pour transmettre les positions, statuts et affectations d'incidents.
 
-## 📖 Guides principaux
-
-### 🎯 [Vue d'ensemble du système](Systeme_complet/Systeme_complet.md)
-**Pour qui** : Chef de projet, architecte, développeur débutant  
-**Contenu** : Architecture globale, flux de communication, déploiement complet  
-**⏱️ Lecture** : 20-30 minutes
-
-Comprend :
-- Architecture système complète
-- Tous les composants et leurs interactions
-- Guide de déploiement de A à Z
-- Tests et validation
-- Performances et limitations
-
----
-
-## 🔧 Documentation des composants
-
-### 📡 [Passerelle UART ↔ Radio](Passerelles/Passerelle_UART_radio.md)
-**Pour qui** : Développeur, intégrateur  
-**Contenu** : Passerelle bidirectionnelle entre simulateur Java et réseau radio  
-**⏱️ Lecture** : 15 minutes
-
-Comprend :
-- Configuration UART (115200 bps)
-- Format CSV des messages
-- Mécanisme ACK/Retry
-- Déduplication automatique
-- Indicateurs visuels (T/!/A)
-- Code source principal
-
----
-
-### 📱 [Application Terrain (Émetteur)](Applications/App_terrain.md)
-**Pour qui** : Développeur embarqué  
-**Contenu** : Carte micro:bit embarquée dans les véhicules  
-**⏱️ Lecture** : 15 minutes
-
-Comprend :
-- Envoi périodique de positions GPS
-- Gestion boutons (statuts, événements)
-- Réception affectations d'incidents
-- Intégration module GPS
-- Code source type
-- Personnalisation par véhicule
-
----
-
-### 🏢 [Passerelle RF Centrale](Passerelles/Passerelle_RF_centrale.md)
-**Pour qui** : Développeur backend, DevOps  
-**Contenu** : Récepteur central vers API backend  
-**⏱️ Lecture** : 10 minutes
-
-Comprend :
-- Firmware micro:bit récepteur
-- Gateway Python (UART → API)
-- Configuration SSE pour affectations
-- Déploiement backend
-- Variables d'environnement
-
----
-
-## 🔐 Documentation technique protocolaire
-
-### 🔒 [Protocole CPE](Protocole/Protocole_CPE.md)
-**Pour qui** : Développeur système, cryptographe  
-**Contenu** : Spécification complète du protocole de chiffrement  
-**⏱️ Lecture** : 25 minutes
-
-Comprend :
-- Structure trame 29 octets
-- Chiffrement AES-128 CTR
-- Calcul CRC-16 CCITT
-- 3 types de messages (Position, Statut, Incident)
-- API C complète
-- Vecteur d'initialisation
-- Recommandations sécurité
-
----
-
-### 📻 [Librairie SDMIS_RADIO](Librairie/SDMIS_radio.md)
-**Pour qui** : Développeur micro:bit  
-**Contenu** : API haut niveau pour communication radio fiable  
-**⏱️ Lecture** : 20 minutes
-
-Comprend :
-- Architecture logicielle (3 couches)
-- Mécanisme ACK/Retry (3 tentatives)
-- Anti-duplication (seq + nonce)
-- API simple : init(), poll(), send_*()
-- Exemples complets (émetteur/récepteur)
-- Performances et limitations
-- Dépannage
-
----
-
-## 🚀 Guides pratiques
-
-### ⚡ Guide de démarrage rapide
-
-**Objectif** : Système fonctionnel en 30 minutes
-
-1. **Cloner le projet**
-   ```bash
-   git clone https://github.com/votre-org/iot-terrain-microbit.git
-   cd iot-terrain-microbit
-   ```
-
-2. **Compiler les firmwares**
-   ```bash
-   make clean && make build
-   # Génère: out/iot-terrain-microbit.hex
-   ```
-
-4. **Flasher les cartes**
-   - Passerelle : Flash sur micro:bit #1
-   - Terrain : Flash sur micro:bit #2
-   
-5. **Lancer le simulateur Java**
-   - Port série : `/dev/ttyACM0` (Linux) ou `COM4` (Windows)
-   - Baudrate : 115200
-
-6. **Tester**
-   - Envoyer : `vehicle_position,TEST001,48.856614,2.352222,1736172600`
-   - Observer : "T" sur passerelle, "✓" sur terrain
-
----
-
-### 🔧 Guide de dépannage
-
-| Problème | Voir documentation | Section |
-|----------|-------------------|---------|
-| Aucune communication radio | [SYSTEME_COMPLET](Systeme_complet/Systeme_complet.md) | Diagnostic problèmes |
-| ACK non reçus | [SDMIS_RADIO](Librairie/SDMIS_radio.md) | Dépannage |
-| Erreur compilation | [APP_TERRAIN](Applications/App_terrain.md) | Compilation |
-| Messages CSV invalides | [PASSERELLE_UART_RADIO](Passerelles/Passerelle_UART_radio.md) | Format données |
-| Clé cryptographique | [PROTOCOLE_CPE](Protocole/Protocole_CPE.md) | Sécurité |
-
----
-
-## 📊 Tableaux de référence
-
-### Configuration radio
-
-| Paramètre | Valeur | Fichier config |
-|-----------|--------|----------------|
-| Groupe radio | 42 | `source/main.cpp` |
-| Puissance TX | 7 (max) | `source/main.cpp` |
-| Fréquence | 2.4 GHz | (matériel) |
-| Portée | 100-150 m | - |
-
-### Format des trames
-
-| Type | Taille | Chiffrement | Documentation |
-|------|--------|-------------|---------------|
-| CPE | 29 octets | AES-128 CTR | [PROTOCOLE_CPE](Protocole/Protocole_CPE.md) |
-| ACK | 1 octet | Non | [SDMIS_RADIO](Librairie/SDMIS_radio.md) |
-| CSV UART | ~60 octets | Non | [PASSERELLE_UART_RADIO](Passerelles/Passerelle_UART_radio.md) |
-
-### Latences typiques
-
-| Opération | Latence | Documentation |
-|-----------|---------|---------------|
-| UART → Radio (succès) | 30-50 ms | [PASSERELLE_UART_RADIO](Passerelles/Passerelle_UART_radio.md) |
-| UART → Radio (échec 3×) | ~650 ms | [PASSERELLE_UART_RADIO](Passerelles/Passerelle_UART_radio.md) |
-| Radio → UART | 10-20 ms | [PASSERELLE_UART_RADIO](Passerelles/Passerelle_UART_radio.md) |
-| Bouton → TX | 20-50 ms | [APP_TERRAIN](Applications/App_terrain.md) |
-
----
-
-## 🎓 Parcours de lecture recommandés
-
-### Pour débuter (Nouveau développeur)
-
-1. ⭐ [Vue d'ensemble du système](Systeme_complet/Systeme_complet.md) - Comprendre l'architecture
-2. ⭐ [Passerelle UART-Radio](Passerelles/Passerelle_UART_radio.md) - Commencer par le composant central
-3. [Librairie SDMIS_RADIO](Librairie/SDMIS_radio.md) - Comprendre l'API
-4. [Guide démarrage rapide](#-guide-de-démarrage-rapide) - Mise en pratique
-
-### Pour développer (Contributeur)
-
-1. [Protocole CPE](Protocole/Protocole_CPE.md) - Comprendre la couche crypto
-2. [Librairie SDMIS_RADIO](Librairie/SDMIS_radio.md) - Comprendre la couche fiabilité
-3. [Application Terrain](Applications/App_terrain.md) - Voir cas d'usage complet
-4. Code source dans `source/`
-
-### Pour déployer (Ops/Intégrateur)
-
-1. [Vue d'ensemble](Systeme_complet/Systeme_complet.md) - Section "Installation et déploiement"
-2. [Passerelle UART-Radio](Passerelles/Passerelle_UART_radio.md) - Section "Déploiement"
-3. [Application Terrain](Applications/App_terrain.md) - Section "Compilation et déploiement"
-4. [Passerelle RF Centrale](Passerelles/Passerelle_RF_centrale.md) - Si backend utilisé
-
-### Pour sécuriser (RSSI/Auditeur)
-
-1. [Protocole CPE](Protocole/Protocole_CPE.md) - Section "Sécurité"
-2. [Vue d'ensemble](Systeme_complet/Systeme_complet.md) - Section "Sécurité du système"
-3. [Passerelle UART-Radio](Passerelles/Passerelle_UART_radio.md) - Section "Sécurité et fiabilité"
-4. Recommandations de rotation de clés
-
----
-
-## 📦 Structure du projet
+## Architecture globale
 
 ```
-iot-terrain-microbit/
-├── docs/                           # 📚 Toute la documentation
-│   ├── README.md                   # ⭐ Ce fichier (index)
-│   ├── SYSTEME_COMPLET.md          # Vue d'ensemble globale
-│   ├── PROTOCOLE_CPE.md            # Spéc protocole chiffrement
-│   ├── SDMIS_RADIO.md              # API librairie radio
-│   ├── PASSERELLE_UART_RADIO.md    # Passerelle Java ↔ Radio
-│   ├── APP_TERRAIN.md              # Application embarquée
-│   └── PASSERELLE_RF_CENTRALE.md   # Gateway backend (optionnel)
-├── source/                         # Code source
-│   ├── main.cpp                    # Point d'entrée
-│   ├── lib/                        # Librairie SDMIS_RADIO
-│   ├── proto/                      # Protocole CPE
-│   └── crypto/                     # TinyCrypt (AES-128)
-├── build/                          # Fichiers de build (généré)
-├── out/                            # Firmware compilé (généré)
-├── Makefile                        # Cibles de compilation
-└── README.md                       # README projet principal
+┌───────────────────────┐
+│  Véhicules terrain    │
+│  (micro:bit #1, #2..) │
+│  iot-terrain-microbit │
+└──────────┬────────────┘
+           │ Radio 2.4GHz
+           │ (Protocole CPE)
+           ↓
+┌───────────────────────┐
+│  Passerelle centrale  │
+│  (micro:bit RX)       │
+│  rf-central-gateway   │
+│     └─ firmware       │
+└──────────┬────────────┘
+           │ UART 115200
+           │ (CSV)
+           ↓
+┌───────────────────────┐
+│  Gateway Python       │
+│  rf_gateway/          │
+│  └─ Serial ↔ RabbitMQ │
+└──────────┬────────────┘
+           │ RabbitMQ
+           ↓
+┌───────────────────────┐
+│  API Backend          │
+│  (FastAPI)            │
+└───────────────────────┘
 ```
 
----
+## Composants
 
-## 🔗 Liens externes utiles
+### 1. Protocole CPE
+Le protocole de communication sécurisé utilisé pour les échanges radio.
+- **Fichier** : [Protocole/Protocole_CPE.md](Protocole/Protocole_CPE.md)
+- **Code** : `firmware/source/proto/cpe/`
+- **Chiffrement** : AES-128-CTR
+- **Taille trame** : 30 octets
 
-| Ressource | Lien | Utilité |
-|-----------|------|---------|
-| **BBC Micro:bit** | https://microbit.org | Documentation officielle |
-| **Yotta build** | http://yottabuild.org | Outil de build micro:bit |
-| **TinyCrypt** | https://github.com/intel/tinycrypt | Bibliothèque crypto |
-| **ARM Toolchain** | https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm | Compilateur |
-| **NMEA GPS** | https://www.gpsinformation.org/dale/nmea.htm | Protocole GPS |
+### 2. Librairie SDMIS_RADIO
+Couche d'abstraction pour la communication radio sur micro:bit.
+- **Fichier** : [Librairie/SDMIS_radio.md](Librairie/SDMIS_radio.md)
+- **Code** : `firmware/source/lib/`
+- **Fonctions** : ACK/Retry, déduplication, buffer circulaire
 
----
+### 3. Applications micro:bit
+Deux applications C++ pour micro:bit v1 :
+- **Terrain** (`iot-terrain-microbit`) : Émetteur sur véhicules
+- **Centrale** (`rf-central-gateway/firmware`) : Récepteur passerelle
 
-## ❓ FAQ
+### 4. Gateway Python
+Service Python pour la conversion UART ↔ RabbitMQ.
+- **Code** : `rf-central-gateway/gateway/`
+- **Langage** : Python 3.11+
+- **Librairies** : pyserial, pika, pydantic
 
-### Quelle est la portée maximale du système ?
-**Réponse** : 100-150 m en extérieur dégagé, 30-50 m en intérieur. Voir [SYSTEME_COMPLET.md - Performances](SYSTEME_COMPLET.md#-performances-du-système).
+## Flux de données
 
-### Combien de véhicules peuvent être gérés simultanément ?
-**Réponse** : Théoriquement illimité en réception, ~15 msg/s en émission. Voir [SYSTEME_COMPLET.md - Débit](SYSTEME_COMPLET.md#débit).
+### Terrain → API (Télémétrie)
+1. **Véhicule** envoie position/statut via UART CSV
+2. **micro:bit terrain** encode en protocole CPE et transmet par radio
+3. **micro:bit centrale** reçoit, décode et transmet en UART CSV
+4. **Gateway Python** parse le CSV et publie sur RabbitMQ
+5. **API** consomme les messages et met à jour la base de données
 
-### Comment changer la clé de chiffrement ?
-**Réponse** : Générer avec `openssl rand -hex 16` puis éditer `CPE_KEY` dans tous les firmwares. Voir [PROTOCOLE_CPE.md - Gestion clé](PROTOCOLE_CPE.md#gestion-de-la-clé).
+### API → Terrain (Affectations)
+1. **API** publie une affectation d'incident sur RabbitMQ
+2. **Gateway Python** consomme le message et envoie en UART CSV
+3. **micro:bit centrale** encode en protocole CPE et transmet par radio
+4. **micro:bit terrain** reçoit, décode et transmet en UART CSV
+5. **Véhicule** affiche l'affectation
 
-### Le système est-il certifié pour usage professionnel ?
-**Réponse** : Non, c'est un prototype. Audit de sécurité requis pour déploiement opérationnel. Voir [SYSTEME_COMPLET.md - Avertissements](SYSTEME_COMPLET.md#️-avertissements).
+## Formats de données
 
-### Quelle version de micro:bit est supportée ?
-**Réponse** : Principalement v1 (nRF51822). v2 compatible mais non optimisé. Voir [APP_TERRAIN.md - Configuration](APP_TERRAIN.md#️-configuration-technique).
+### UART (CSV)
+Format d'échange entre micro:bit et systèmes externes :
+```
+event,status,immat,lat,lon,timestamp
+```
 
-### Peut-on utiliser un autre module GPS que NEO-6M ?
-**Réponse** : Oui, tout module NMEA compatible (UART). Adapter le parsing si besoin. Voir [APP_TERRAIN.md - Intégration GPS](APP_TERRAIN.md#-intégration-gps).
+**Exemples** :
+```csv
+vehicle_position,1,AB123CD,48.858859,2.294481,1705140000
+vehicle_status,2,AB123CD,0,0,1705140000
+incident_status,3,AB123CD,0,0,1705140000
+vehicle_affectation,0,AB123CD,48.860000,2.300000,1705140000
+```
 
----
+### Radio (Protocole CPE)
+Trames binaires chiffrées de 30 octets transmises en 2.4 GHz.
 
-## 📝 Contribuer à la documentation
+### RabbitMQ (JSON)
+Messages JSON structurés échangés avec l'API.
 
-### Améliorer un document existant
+## Configuration
 
-1. Fork du projet
-2. Éditer le fichier `.md` concerné
-3. Respecter le format Markdown
-4. Pull request avec description claire
+### Clé de chiffrement
+Clé AES-128 partagée (identique sur tous les micro:bit) :
+```c
+const uint8_t CPE_KEY[16] = {
+    0x21, 0x53, 0xB6, 0x09, 0x9A, 0xD2, 0x41, 0x7C,
+    0xE4, 0x10, 0x5F, 0x3A, 0x77, 0xC8, 0x90, 0x0B
+};
+```
 
-### Ajouter un nouveau document
+### Paramètres radio
+- **Groupe terrain** : 9 (iot-terrain-microbit)
+- **Groupe centrale** : 42 (rf-central-gateway)
+- **Puissance** : 7 (maximum)
+- **UART** : 115200 bauds
 
-1. Créer fichier dans `docs/`
-2. Ajouter lien dans ce README
-3. Suivre le template des docs existantes :
-   - Titre principal (#)
-   - Vue d'ensemble
-   - Sections numérotées
-   - Exemples de code
-   - Tableaux de référence
-   - Liens vers autres docs
+## Sécurité
 
-### Style guide
+- **Confidentialité** : Chiffrement AES-128 des données utiles
+- **Intégrité** : Double CRC (header + payload)
+- **Anti-replay** : Nonce et séquence uniques par trame
+- **Validation** : Timestamps, format d'immatriculation, coordonnées GPS
 
-- ✅ Titres clairs et hiérarchisés
-- ✅ Code formaté avec ```cpp ou ```bash
-- ✅ Tableaux pour données structurées
-- ✅ Emojis pour repères visuels (📡 📊 🔒 ⚠️)
-- ✅ Liens relatifs entre documents
-- ❌ Pas de terme technique sans explication
-- ❌ Pas de code sans commentaire
+## Documentation détaillée
 
----
-
-## 📅 Historique des versions
-
-| Version | Date | Changements |
-|---------|------|-------------|
-| 1.0 | Janvier 2026 | Première version complète |
-
----
-
-## 📞 Support
-
-**Projet** : IoT Terrain Micro:bit  
-**Équipe** : Projet Transversal 2026  
-**Licence** : Voir [LICENSE](../LICENSE)
-
----
-
-**📚 Bonne lecture et bon développement !**
+Pour plus d'informations sur chaque composant, consultez :
+- **[Système complet](Systeme_complet.md)** : Documentation détaillée de l'ensemble du système
+- **[Protocole CPE](Protocole/Protocole_CPE.md)** : Format des trames radio
+- **[Librairie SDMIS](Librairie/SDMIS_radio.md)** : API de communication micro:bit
