@@ -81,7 +81,7 @@ incident_status,3,AB123CD,0,0,1705140000
 
 **Configuration** :
 ```cpp
-RADIO_GROUP = 42
+RADIO_GROUP = 9
 RADIO_POWER = 7
 UART_BAUD = 115200
 ```
