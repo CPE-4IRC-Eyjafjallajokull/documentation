@@ -299,11 +299,6 @@ docker compose up
 - **Gateway Python** : <5ms (parsing + RabbitMQ)
 - **Total terrain→API** : 10-60ms
 
-### 5.3 Portée radio
-- **Théorique** : 100m en intérieur, 300m en extérieur
-- **Pratique** : 50-150m selon environnement
-- **Puissance** : Niveau 7/7 (maximum)
-
 ## 6. Debugging et monitoring
 
 ### 6.1 LEDs micro:bit
