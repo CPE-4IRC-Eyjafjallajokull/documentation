@@ -63,7 +63,7 @@ uv run uvicorn app.main:app --reload --app-dir src
 - `incident_phase_update`
 - `assignment_request`
 - `assignment_proposal`
-- `assignement_proposal_accepted` (orthographe conforme au code)
+- `assignement_proposal_accepted`
 - `assignment_proposal_refused`
 - `vehicle_assignment`
 - `vehicle_position_update`
