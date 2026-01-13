@@ -1,22 +1,35 @@
-# Apps QG
+# Applications
 
-Synthèse des composants applicatifs du QG et liens vers leur documentation détaillée.
+Synthese des composants applicatifs et liens vers leur documentation detaillee.
 
-## Répartition
-- [App QG API (FastAPI)](app-qg-api.md) — point d'entrée REST/SSE, orchestration des connecteurs et du moteur décisionnel.
-- [App QG Front (Next.js)](app-qg-front.md) — interface opérateur sur navigateur.
-- [Moteur décisionnel Java](app-qg-java-engine.md) — logique métier centralisée et échanges RabbitMQ/DB.
+---
 
-## SSE Integration
+## Repartition
 
-Real-time event streaming between API and frontend using Server-Sent Events (SSE):
+- **App QG API (FastAPI)** : [qg-api.md](qg-api.md)
+- **App QG Front (Next.js)** : [qg-front/README.md](qg-front/README.md)
+- **Moteur decisionnel Java** : [qg-java-engine.md](qg-java-engine.md)
+- **App Terrain Front (Next.js)** : [terrain-front.md](terrain-front.md)
 
-- **[SSE Quick Start](sse-quickstart.md)** — Get SSE running in 5 minutes
-- **[App QG Front - SSE Details](app-qg-front-sse.md)** — Frontend hook, components, and usage
-- **[App QG API - SSE Details](app-qg-api-sse.md)** — CORS setup, streaming configuration, and performance
+---
 
-## À retenir
-- Tous les services QG s'appuient sur RabbitMQ pour la messagerie et PostgreSQL pour la persistance.
-- Keycloak est l'IDP commun pour l'auth des opérateurs/simulations.
-- Les docs ci-dessous indiquent les commandes de démarrage rapides et les zones de configuration à compléter.
-- SSE permet une communication temps réel du serveur vers le client via HTTP standard (voir SSE Integration ci-dessus).
+## SSE (temps reel)
+
+- Demarrage rapide : [sse-quickstart.md](sse-quickstart.md)
+- Front QG (hooks + proxy) : [qg-front/sse.md](qg-front/sse.md)
+- API QG (endpoint /qg/live) : [qg-api-sse.md](qg-api-sse.md)
+
+---
+
+## Authentification
+
+- Setup Keycloak + NextAuth : [auth/keycloak-nextauth-setup.md](auth/keycloak-nextauth-setup.md)
+- Integration detaillee : [auth/keycloak-nextauth-integration.md](auth/keycloak-nextauth-integration.md)
+
+---
+
+## A retenir
+
+- **RabbitMQ** pour la messagerie interne.
+- **PostgreSQL** pour la persistance des donnees.
+- **Keycloak** comme IDP pour les fronts et l'API.

@@ -50,6 +50,8 @@ Gère la connexion SSE, la reconnexion automatique et distribue les événements
 | `vehicle_status_update` | Changement de statut véhicule |
 | `vehicle_assignment` | Affectation véhicule |
 | `assignment_proposal` | Proposition d'affectation |
+| `assignement_proposal_accepted` | Proposition acceptée (orthographe conforme au code) |
+| `assignment_proposal_refused` | Proposition refusée |
 
 ---
 

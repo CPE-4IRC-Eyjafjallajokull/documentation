@@ -41,14 +41,14 @@ Ce système IoT permet la communication bidirectionnelle entre des véhicules de
 
 ### 1. Protocole CPE
 Le protocole de communication sécurisé utilisé pour les échanges radio.
-- **Fichier** : [Protocole/Protocole_CPE.md](Protocole/Protocole_CPE.md)
+- **Fichier** : [protocole/protocole-cpe.md](protocole/protocole-cpe.md)
 - **Code** : `firmware/source/proto/cpe/`
 - **Chiffrement** : AES-128-CTR
 - **Taille trame** : 30 octets
 
 ### 2. Librairie SDMIS_RADIO
 Couche d'abstraction pour la communication radio sur micro:bit.
-- **Fichier** : [Librairie/SDMIS_radio.md](Librairie/SDMIS_radio.md)
+- **Fichier** : [librairie/sdmis-radio.md](librairie/sdmis-radio.md)
 - **Code** : `firmware/source/lib/`
 - **Fonctions** : ACK/Retry, déduplication, buffer circulaire
 
@@ -128,6 +128,8 @@ const uint8_t CPE_KEY[16] = {
 ## Documentation détaillée
 
 Pour plus d'informations sur chaque composant, consultez :
-- **[Système complet](Systeme_complet.md)** : Documentation détaillée de l'ensemble du système
-- **[Protocole CPE](Protocole/Protocole_CPE.md)** : Format des trames radio
-- **[Librairie SDMIS](Librairie/SDMIS_radio.md)** : API de communication micro:bit
+- **[Système complet](systeme-complet/systeme-complet.md)** : Documentation détaillée de l'ensemble du système
+- **[Protocole CPE](protocole/protocole-cpe.md)** : Format des trames radio
+- **[Librairie SDMIS](librairie/sdmis-radio.md)** : API de communication micro:bit
+- **[Micro:bit terrain](terrain-microbit.md)** : Build/flash rapide
+- **[Passerelle RF](rf-central-gateway.md)** : Lien UART ↔ RabbitMQ

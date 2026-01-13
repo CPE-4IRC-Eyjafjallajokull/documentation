@@ -1,159 +1,81 @@
-# Système Intégré de Gestion et Suivi des Incidents — Documentation
+# Systeme Integre de Gestion et Suivi des Incidents — Documentation
 
-Ce dépôt centralise l’ensemble de la documentation liée au projet : conception, architecture, protocoles IoT, modèles de données, décisions techniques et guides d’utilisation.
-Il constitue la référence unique pour comprendre, maintenir et faire évoluer le système dans toutes ses composantes.
-
----
-
-## 1. Présentation générale
-
-Le système vise à fournir une plateforme complète permettant :
-
-* la supervision en temps quasi réel des incidents, véhicules et interventions ;
-* la gestion opérationnelle des ressources du SDMIS ;
-* l’orchestration automatique (mais supervisée) des propositions d’affectation ;
-* la réception et l’exploitation de messages IoT transmis depuis les véhicules ;
-* la capacité à fonctionner avec une simulation complète pour les tests.
-
-L’architecture repose sur trois blocs principaux :
-
-1. **App QG** : interface opérateur, API REST et moteur décisionnel Java.
-2. **IoT Terrain** : micro:bit embarqué, passerelle RF et protocole UART.
-3. **Simulation Java** : génération d’incidents, véhicules et événements externes.
+Ce dossier regroupe la documentation fonctionnelle et technique du projet SDMIS.
+L'objectif est d'expliquer simplement comment le systeme fonctionne, comment il se demarre
+et comment les composants dialoguent entre eux.
 
 ---
 
-## 2. Architecture Applicative
+## Lire en premier
 
-Le schéma associé décrit les interactions entre les différents composants :
-
-### Composants internes à l’App QG
-
-* **Front — UI QG (React)**
-  Interface web opérateur : carte, incidents, interventions, ressources.
-  Consommation API REST, authentification via Keycloak, mise à jour continue via SSE.
-
-* **Backend QG — API REST (FastAPI)**
-  Point d’entrée unique des événements externes.
-  Normalisation/validation des données, agrégation, exposition des endpoints front.
-  Communication interne vers le moteur Java via RabbitMQ.
-
-* **Core Engine — Java**
-  Centralisation des états incidents/interventions/ressources.
-  Application des règles métier et filtrages.
-  Génération des propositions automatiques d’intervention.
-  Communication bidirectionnelle avec : API FastAPI, simulation, base de données, IoT.
-
-* **RabbitMQ (pub/sub)**
-  Canal interne de routage des événements : incidents, positions GPS, demandes d'affectation, états d'interventions.
-
-* **PostgreSQL**
-  Stockage durable des incidents, véhicules, interventions, positions, journaux d’événements.
-
-* **Keycloak**
-  Authentification et gestion des rôles pour l’interface opérateur et l’API.
+- Vue d'ensemble du systeme : [overview/README.md](overview/README.md)
+- Flux des incidents : [overview/flux-incidents.md](overview/flux-incidents.md)
+- Flux terrain et telemetrie : [overview/flux-telemetrie.md](overview/flux-telemetrie.md)
 
 ---
 
-## 3. Sous-système IoT Terrain
+## Demarrage rapide (dev)
 
-* **App Terrain (micro:bit)**
-  Transmission RF des messages suivants :
-  localisation GPS, informations incident, renfort, fin d’intervention, disponibilité.
-
-* **Centrale RF**
-  Réception RF → transformation → émission UART vers le moteur Java.
-
-* **Protocole UART**
-  Trames normalisées, robustes et sécurisées.
+- Stack Docker complete (BDD, RabbitMQ, Keycloak, apps) : [infrastructure/README.md](infrastructure/README.md)
+- Details des applications : [apps/README.md](apps/README.md)
+- Simulation (incidents/vehicules) : [simulation/README.md](simulation/README.md)
+- IoT (micro:bit + passerelle RF) : [iot/README.md](iot/README.md)
 
 ---
 
-## 4. Simulation Java
+## Architecture (resume)
 
-La simulation agit comme source d’événements externes :
+```
+[Front QG] ----\
+                >-- API (FastAPI) -- PostgreSQL
+[Front Terrain]-/
+                    |
+                    | SSE (temps reel)
+                    v
+                 Navigateurs
 
-* génération d’incidents (type, localisation, gravité, évolution) ;
-* simulation des véhicules (trajets, états, positions) ;
-* injection cohérente dans l’API QG ou dans RabbitMQ selon le mode choisi.
-
-Elle permet de tester le système sans matériel réel.
-
----
-
-## 5. Organisation des dépôts (repos)
-
-Chaque composant applicatif possède son propre dépôt :
-
-* `documentation` (celui-ci)
-* `app-qg-front` (React)
-* `app-qg-api` (FastAPI)
-* `app-qg-java-engine` (moteur décisionnel Java)
-* `simulation-java`
-* `iot-terrain-microbit`
-* `rf-central-gateway`
-* `infrastructure-devops` (CI/CD, conteneurs, Keycloak, migrations BDD)
+API <-> RabbitMQ <-> Java Engine (propositions d'affectation)
+IoT micro:bit -> RF Gateway -> RabbitMQ -> API
+Simulation -> API / RabbitMQ
+```
 
 ---
 
-## 6. Contenu de ce dépôt
+## Documentation par theme
 
-Ce dépôt rassemble :
+### Vue d'ensemble
+- [overview/README.md](overview/README.md)
+- [overview/flux-incidents.md](overview/flux-incidents.md)
+- [overview/flux-telemetrie.md](overview/flux-telemetrie.md)
 
-### 6.1. Spécifications Fonctionnelles
+### Applications
+- [apps/README.md](apps/README.md)
+- API FastAPI : [apps/qg-api.md](apps/qg-api.md)
+- Front QG : [apps/qg-front/README.md](apps/qg-front/README.md)
+- Front Terrain : [apps/terrain-front.md](apps/terrain-front.md)
+- Moteur Java : [apps/qg-java-engine.md](apps/qg-java-engine.md)
+- SSE : [apps/sse-quickstart.md](apps/sse-quickstart.md)
+- Auth Keycloak/NextAuth : [apps/auth/keycloak-nextauth-setup.md](apps/auth/keycloak-nextauth-setup.md)
 
-Cas d’usage, parcours opérateur, scénarios incidents/interventions, exigences liées au QG et au terrain.
+### IoT
+- [iot/README.md](iot/README.md)
+- Terrain micro:bit : [iot/terrain-microbit.md](iot/terrain-microbit.md)
+- Passerelle RF : [iot/rf-central-gateway.md](iot/rf-central-gateway.md)
+- Protocole : [iot/protocole/protocole-cpe.md](iot/protocole/protocole-cpe.md)
 
-### 6.2. Spécifications Techniques Générales
+### Simulation
+- [simulation/README.md](simulation/README.md)
+- Incidents : [simulation/incidents.md](simulation/incidents.md)
+- Vehicules : [simulation/vehicles.md](simulation/vehicles.md)
 
-Décomposition des services, API internes/externes, diagrammes d’architecture, choix techniques motivés.
-
-### 6.3. Documentation IoT
-
-Protocole RF, structure des trames UART, contraintes de sécurité, gestion des erreurs.
-
-### 6.4. Modèles de données
-
-Schéma SQL complet (PostgreSQL), contraintes, index, historiques.
-
-### 6.5. API REST
-
-Endpoints, schémas JSON, statuts, exemples de requêtes/réponses.
-
-### 6.6. Guides pratiques
-
-Installation, exécution locale, intégration CI/CD, déploiement, configuration Keycloak.
-
-### 6.7. Annexes
-
-Diagrammes, décisions techniques, glossaire, conventions de nommage.
-
----
-
-## 7. Objectif du dépôt
-
-Garantir une compréhension claire, durable et extensible du système complet, tout en offrant un support unique pour :
-
-* la soutenance,
-* les jalons d’architecture,
-* la montée en compétence des nouveaux contributeurs,
-* la maintenance technique.
-
-Ce dépôt doit toujours refléter l’état réel du système et ses évolutions.
+### Specifications et annexes
+- Specifications fonctionnelles : [specs/functional.md](specs/functional.md)
+- Matrice des flux applicatifs : [references/matrice-des-flux.xlsx](references/matrice-des-flux.xlsx)
+- Securite CI : [security/](security/)
 
 ---
 
-## 8. Navigation rapide
+## Objectif
 
-* Spécifications fonctionnelles détaillées : [functional_spec/main.md](functional_spec/main.md)
-* App QG : [vue d’ensemble](apps/README.md)
-  * API FastAPI : [apps/app-qg-api.md](apps/app-qg-api.md)
-  * Front Next.js : [apps/app-qg-front.md](apps/app-qg-front.md)
-  * Moteur décisionnel Java : [apps/app-qg-java-engine.md](apps/app-qg-java-engine.md)
-* IoT Terrain : [vue d’ensemble](iot/README.md)
-  * App terrain micro:bit : [iot/iot-terrain-microbit.md](iot/iot-terrain-microbit.md)
-  * Passerelle RF centrale : [iot/rf-central-gateway.md](iot/rf-central-gateway.md)
-* Simulation Java : [vue d’ensemble](simulation/README.md)
-  * Incidents : [simulation/simulation-java-incidents.md](simulation/simulation-java-incidents.md)
-  * Véhicules : [simulation/simulation-java-vehicles.md](simulation/simulation-java-vehicles.md)
-* Infrastructure / DevOps : [infrastructure/README.md](infrastructure/README.md)
+Fournir une reference unique, claire et maintenable pour comprendre le systeme,
+faciliter la prise en main, et aligner l'implementation avec les choix techniques.

@@ -114,7 +114,7 @@ FRONT_HTTP_PORT=3000
 
 ---
 
-## �️ Base de données
+## Base de donnees
 
 Les scripts SQL dans `database/init/` sont exécutés automatiquement au premier démarrage :
 
@@ -150,5 +150,4 @@ Configuration dans `rabbitmq/` :
 
 - Les données sont dans `data/` — supprimer pour repartir à zéro
 - Secrets : ne jamais commiter `.env.local`, utiliser `.env.local.example`
-- Prod : utiliser des images prébuilt via `REGISTRY` et `TAG`
-- Prod : utiliser des images prébuilt via `REGISTRY` et `TAG`
+- Prod : utiliser des images prebuilt via `REGISTRY` et `TAG`
