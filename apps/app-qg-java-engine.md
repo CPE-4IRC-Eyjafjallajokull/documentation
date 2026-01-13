@@ -11,7 +11,7 @@ RabbitMQ (sdmis_engine)
         ↓
    [Event Listener]
         ↓
-   [IncidentHandler]
+   [AssignmentRequestHandler]
         ↓
    [Decision Engine]
         ├─ Data Source (API SDMIS)
@@ -34,8 +34,8 @@ RabbitMQ (sdmis_api)
 - **Gestion des contraintes** : Respect des requirements par type de véhicule
 
 ### 2. Intégration système
-- **Écoute RabbitMQ** : Réagit aux événements `new_incident`
-- **API SDMIS** : Récupère les données d'incidents, véhicules, planifications
+- **Écoute RabbitMQ** : Réagit aux événements `assignment_request`
+- **API SDMIS** : Récupère les données d'incidents, véhicules, estimations de trajet
 - **PostgreSQL** : Connectivité et health check
 - **Keycloak** : Authentification JWT pour l'API SDMIS
 
@@ -44,15 +44,16 @@ RabbitMQ (sdmis_api)
 ### DecisionEngine
 Interface du moteur de décision :
 ```java
-DecisionResult proposeAssignments(UUID incidentId)
+DecisionResult proposeAssignments(AssignmentRequest request)
 ```
 
 **Implémentation** : `VehicleAssignmentDecisionEngine`
-- Récupère la situation d'incident et le planning requis
-- Liste les véhicules disponibles
-- Calcule les candidats par type de véhicule
+- Agrège les besoins par phase d'incident
+- Récupère la position de l'incident et les véhicules disponibles
+- Filtre les véhicules (assignés, en proposition, hors critères)
+- Calcule distance/temps via API de routing (`/geo/route`)
 - Applique la stratégie de scoring
-- Génère les propositions d'affectation
+- Génère les propositions avec rang et géométrie de route
 
 ### VehicleScoringStrategy
 Stratégie de scoring des véhicules candidats.
@@ -60,22 +61,22 @@ Stratégie de scoring des véhicules candidats.
 **Implémentation** : `DistanceEnergyScoringStrategy`
 - **Score** = (distance × 0.4 + temps × 0.4 + énergie × 0.2) / somme_poids
 - Favorise les véhicules proches, rapides et avec bonne énergie
-- Gère les métriques manquantes (distance/temps indisponibles)
+- Gère les métriques manquantes dynamiquement
 
 ### DecisionDataSource
 Source de données pour les décisions.
 
 **Implémentation** : `SdmisDecisionDataSource`
-- Requêtes vers l'API SDMIS (REST)
-- Récupération : incidents, véhicules, planifications, phases
-- Authentification Keycloak
-- Cache et retry
+- `GET /qg/incidents/{id}/situation` : Position de l'incident
+- `GET /qg/vehicles` : Liste des véhicules avec positions
+- `POST /geo/route` : Calcul de distance, temps et géométrie de route
+- Authentification Keycloak automatique
 
-### IncidentHandler
-Handler d'événements pour les nouveaux incidents :
-1. Reçoit événement `new_incident` depuis RabbitMQ
-2. Extrait l'ID incident du payload
-3. Appelle le moteur de décision
+### AssignmentRequestHandler
+Handler d'événements pour les demandes d'affectation :
+1. Reçoit événement `assignment_request` depuis RabbitMQ
+2. Parse le payload contenant `incident_id` et `vehicles_needed`
+3. Appelle le moteur de décision avec les besoins explicites
 4. Publie les propositions sur queue `sdmis_api`
 
 ## Flux de décision
@@ -83,51 +84,72 @@ Handler d'événements pour les nouveaux incidents :
 ### 1. Réception événement
 ```json
 {
-  "event": "new_incident",
+  "event": "assignment_request",
   "payload": {
     "incident_id": "uuid-123",
-    ...
+    "vehicles_needed": [
+      {
+        "incident_phase_id": "uuid-phase",
+        "vehicle_type_id": "uuid-type",
+        "quantity": 2
+      }
+    ]
   }
 }
 ```
 
 ### 2. Récupération données
-- **Incident** : Position GPS, phases actives
-- **Planning** : Requirements par phase et type de véhicule
-- **Véhicules** : Liste complète avec positions, types, énergie
+- **Besoins** : Liste des véhicules requis par phase (`vehicles_needed`)
+- **Véhicules** : Liste complète avec positions, types, énergie (via API SDMIS)
 
 ### 3. Calcul scoring
 Pour chaque véhicule candidat :
-1. Calcul distance euclidienne incident ↔ véhicule
-2. Estimation temps de trajet (si disponible)
+1. Résolution position (GPS temps réel ou base d'affectation)
+2. Calcul distance/temps via API de routing (fallback: formule Haversine)
 3. Récupération niveau d'énergie
 4. Application de la formule de scoring
-5. Classement par score décroissant
+5. Classement par score décroissant, puis temps, puis distance
 
-### 4. Sélection optimale
+### 4. Filtrage des véhicules
+Un véhicule est **exclu** si :
+- Déjà assigné à un incident (`activeAssignment != null`)
+- Référencé dans une proposition en attente (`referencedInPendingProposal`)
+- Énergie insuffisante (< `DECISION_MIN_ENERGY_LEVEL`)
+- Distance trop grande (> `DECISION_MAX_DISTANCE_KM`)
+
+### 5. Sélection optimale
 - Parcours des groupes de requirements par priorité
 - Allocation des meilleurs véhicules disponibles
 - Respect des quantités requises par type
 - Évite les doublons (véhicule déjà alloué)
 
-### 5. Génération proposition
+### 6. Génération proposition
 ```json
 {
-  "event": "vehicle_assignment_proposal",
+  "event": "assignment_proposal",
   "payload": {
     "proposal_id": "uuid-456",
     "incident_id": "uuid-123",
     "generated_at": "2026-01-12T10:00:00Z",
-    "proposals": [
+    "vehicles_to_send": [
       {
+        "incident_phase_id": "uuid-phase",
         "vehicle_id": "uuid-789",
+        "distance_km": 2.5,
+        "estimated_time_min": 3.2,
+        "route_geometry": { "type": "LineString", "coordinates": [...] },
+        "energy_level": 0.9,
         "score": 0.85,
-        "rationale": "distance_km=2.5, time_min=3.2, energy=0.9"
+        "rank": 1
       }
     ],
-    "missing_by_vehicle_type": {
-      "uuid-type-1": 2
-    }
+    "missing": [
+      {
+        "incident_phase_id": "uuid-phase",
+        "vehicle_type_id": "uuid-type",
+        "missing_quantity": 2
+      }
+    ]
   }
 }
 ```
@@ -137,28 +159,34 @@ Pour chaque véhicule candidat :
 Variables d'environnement (`.env`) :
 
 ```bash
-# RabbitMQ
-RABBITMQ_URI=amqp://user:pass@host:5672/
-RABBITMQ_QUEUE_DURABLE=true
+# Logging
+LOG_LEVEL=INFO
 
 # PostgreSQL
 POSTGRES_URL=jdbc:postgresql://host:5432/sdmis
 POSTGRES_USER=user
 POSTGRES_PASSWORD=password
+POSTGRES_POOL_SIZE=5
+POSTGRES_CONNECTION_TIMEOUT_MS=30000
+
+# RabbitMQ
+RABBITMQ_URI=amqp://user:pass@host:5672/vhost
+RABBITMQ_QUEUE_DURABLE=true
 
 # Keycloak
-KEYCLOAK_REALM=sdmis
-KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
+KEYCLOAK_ISSUER=http://keycloak:8080/realms/sdmis
 KEYCLOAK_CLIENT_ID=sdmis-api
 KEYCLOAK_CLIENT_SECRET=secret
+KEYCLOAK_TIMEOUT_MS=3000
+KEYCLOAK_TOKEN_EXPIRY_SKEW_SECONDS=30
 
 # API SDMIS
 SDMIS_API_BASE_URL=http://api:8000
+SDMIS_API_TIMEOUT_MS=5000
 
-# Critères de décision (optionnel)
-DECISION_MIN_ENERGY_LEVEL=0.2
-DECISION_MAX_DISTANCE_KM=50.0
-DECISION_MAX_TRAVEL_TIME_MIN=30.0
+# Critères de décision
+DECISION_MAX_DISTANCE_KM=15
+DECISION_MIN_ENERGY_LEVEL=0.3
 ```
 
 ## Queues RabbitMQ
@@ -171,10 +199,10 @@ DECISION_MAX_TRAVEL_TIME_MIN=30.0
 ## Événements
 
 ### Consommés
-- **`new_incident`** : Nouvel incident créé, déclenche le moteur
+- **`assignment_request`** : Demande d'affectation de véhicules pour un incident
 
 ### Produits
-- **`vehicle_assignment_proposal`** : Propositions d'affectation calculées
+- **`assignment_proposal`** : Propositions d'affectation calculées avec scores et routes
 
 ## Démarrage
 
@@ -196,7 +224,7 @@ cp .env.example .env
 # Éditer .env avec vos paramètres
 
 # Exécution
-java -jar target/app-qg-java-engine.jar
+java -jar target/app-qg-java-engine-1.0-SNAPSHOT-jar-with-dependencies.jar
 ```
 
 ### Docker
@@ -212,21 +240,22 @@ docker compose up
 
 ```
 src/main/java/cpe/qg/engine/
-├── App.java                    # Point d'entrée
-├── auth/                       # Authentification Keycloak
-├── config/                     # Configuration environnement
-├── database/                   # Clients PostgreSQL
-├── decision/                   # Moteur de décision
-│   ├── api/                    # Interfaces
-│   ├── impl/                   # Implémentations
-│   └── model/                  # Modèles de données
-├── events/                     # Gestion événements
-├── handlers/                   # Handlers d'événements
-│   └── IncidentHandler.java   # Handler incidents
-├── messaging/                  # Client RabbitMQ
-├── sdmis/                      # Client API SDMIS
-│   └── dto/                    # DTOs API
-└── service/                    # Services (health check)
+├── App.java                        # Point d'entrée
+├── auth/                           # Authentification Keycloak
+├── config/                         # Configuration environnement
+├── database/                       # Clients PostgreSQL
+├── decision/                       # Moteur de décision
+│   ├── api/                        # Interfaces
+│   ├── impl/                       # Implémentations
+│   └── model/                      # Modèles de données
+├── events/                         # Gestion événements
+├── handlers/                       # Handlers d'événements
+│   └── AssignmentRequestHandler.java  # Handler principal
+├── logging/                        # Provider de logs
+├── messaging/                      # Client RabbitMQ
+├── sdmis/                          # Client API SDMIS
+│   └── dto/                        # DTOs API
+└── service/                        # Services (health check)
 ```
 
 ## Tests
@@ -234,9 +263,6 @@ src/main/java/cpe/qg/engine/
 ```bash
 # Run tests
 mvn test
-
-# Tests avec couverture
-mvn verify
 ```
 
 ## Monitoring
@@ -246,9 +272,10 @@ mvn verify
 INFO - Starting QG Java Engine...
 INFO - RabbitMQ Config: uri=amqp://..., durableQueue=true
 INFO - Connectivity check passed
-INFO - Engine is running. Listening on queues [sdmis_engine]
-INFO - Processing new incident message: {...}
-INFO - Sent decision proposal to sdmis_api for incident uuid-123
+INFO - Engine is running. Listening on queues [sdmis_engine] for events [assignment_request]
+INFO - Processing assignment request message: {...}
+INFO - Assignment proposals generated for incident uuid-123: 3 vehicle(s), 1 missing entries
+INFO - Sent assignment proposal to sdmis_api for incident uuid-123
 ```
 
 ### Health Check
@@ -278,7 +305,7 @@ Véhicule à 5 km, 8 min, énergie 85% :
 
 ## Évolutions futures
 
-- **Routing réel** : Intégration OSRM/GraphHopper pour distances/temps précis
-- **Scoring avancé** : Prise en compte trafic, météo, historique performance
+- **Scoring avancé** : Prise en compte trafic temps réel, météo, historique performance
 - **Machine Learning** : Apprentissage des patterns d'affectation optimaux
 - **Multi-objectifs** : Optimisation équité vs efficacité
+- **Cache de routing** : Mise en cache des estimations de trajet fréquentes
