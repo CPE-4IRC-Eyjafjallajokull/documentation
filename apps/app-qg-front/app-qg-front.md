@@ -1,26 +1,121 @@
 # App QG Front (Next.js)
 
-Interface opérateur (React/Next.js) pour visualiser incidents, interventions et ressources en temps réel.
+Interface opérateur pour la gestion des incidents et véhicules en temps réel.
 
-## Rôle
-- Affichage carte + listes (incidents, interventions, véhicules) alimentées par l'API QG.
-- Authentification Keycloak (à brancher) et rafraîchissement continu via SSE/WebSocket ou polling.
-- Actions opérateur : création/validation d'interventions, suivi des messages terrain.
+---
 
-## Stack
-- Next.js (App Router) + TypeScript.
-- UI composants dans `components/` et logique partagée dans `lib/`.
-- Assets publics dans `public/`.
+## 🎯 Rôle
 
-## Démarrage rapide
+- Visualiser incidents et véhicules sur une carte interactive
+- Recevoir les événements temps réel via SSE
+- Gérer les affectations de véhicules
+- Administrer les données de référence (casernes, types...)
+
+---
+
+## 🏗️ Stack technique
+
+| Technologie | Usage |
+|-------------|-------|
+| Next.js 16 (App Router) | Framework React |
+| TypeScript | Typage |
+| NextAuth v5 | Authentification Keycloak |
+| MapLibre GL | Carte interactive |
+| Radix UI + Tailwind | Composants UI |
+| SWR | Fetching et cache |
+
+---
+
+## 🚀 Démarrage rapide
+
 ```bash
 cd app-qg-front
-npm install
-npm run dev
-# navigateur sur http://localhost:3000
+pnpm install
+pnpm dev
 ```
 
-## Points à compléter
-- Intégration des endpoints `/health` et `/events` du backend (SSE) + sécurisation Keycloak.
-- Cartographie (lib choisie) et conventions de typage des payloads API.
-- Guidelines UI/UX (états de chargement, accessibilité, thèmes) à ajouter ici.
+> Application sur http://localhost:3000
+
+---
+
+## 🔧 Configuration
+
+Créer `.env.local` :
+
+```env
+# Keycloak
+KEYCLOAK_ISSUER=http://localhost:8080/realms/sdmis
+KEYCLOAK_CLIENT_ID=frontend-client
+KEYCLOAK_CLIENT_SECRET=your-secret
+
+# NextAuth
+NEXTAUTH_SECRET=random-secret-32-chars
+NEXTAUTH_URL=http://localhost:3000
+
+# API Backend
+API_URL=http://localhost:3001
+```
+
+---
+
+## 📁 Structure
+
+| Dossier | Contenu |
+|---------|---------|
+| `app/` | Pages et routes API (App Router) |
+| `app/api/` | Proxy vers l'API backend |
+| `components/qg/` | Composants métier (carte, incidents) |
+| `components/admin/` | Interface d'administration |
+| `components/ui/` | Composants UI réutilisables |
+| `hooks/` | Hooks React personnalisés |
+| `lib/` | Services et utilitaires |
+| `types/` | Types TypeScript |
+
+---
+
+## 📡 Pages principales
+
+| Route | Description |
+|-------|-------------|
+| `/` | Dashboard QG (carte + incidents) |
+| `/admin` | Administration des données |
+| `/metrics` | Tableau de bord statistiques |
+| `/auth/signin` | Connexion Keycloak |
+
+---
+
+## 🗺️ Carte interactive
+
+- **Bibliothèque** : MapLibre GL + react-map-gl
+- **Centre par défaut** : Lyon
+- **Marqueurs** : Incidents, véhicules, points d'intérêt
+- **Interactions** : Clic pour créer incident/point d'intérêt
+
+---
+
+## 🔐 Authentification
+
+- NextAuth v5 avec provider Keycloak
+- Token JWT transmis à l'API via proxy
+- Routes protégées automatiquement
+
+---
+
+## 🐳 Docker
+
+```bash
+docker compose up --build
+```
+
+> ⚠️ `API_URL` est embarqué au build. Reconstruire l'image si modifié.
+
+---
+
+## 📜 Scripts
+
+| Commande | Action |
+|----------|--------|
+| `pnpm dev` | Développement |
+| `pnpm build` | Build production |
+| `pnpm start` | Lancer le build |
+| `pnpm lint` | Linter |
